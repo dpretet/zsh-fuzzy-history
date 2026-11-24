@@ -45,31 +45,21 @@ single subsequence pass plus a quick contiguous-match check; it avoids sorting
 or rescanning the full history on each keystroke. Histories with many duplicate
 or ineligible entries may take longer to fill the initial cache.
 
-## Optional: keep routine commands out of future history
+## Optional: keep routine commands out of the history file
 
-This is separate from fuzzy search. To exclude commands such as `ls` and `pwd`
-from new history entries, add the following to `~/.zshrc`:
+This is separate from fuzzy search. To omit commands such as `ls` and `pwd`
+when Zsh writes the history file, add the following to `~/.zshrc`:
 
 ```zsh
-typeset -ga ZSH_HISTORY_SKIP_COMMANDS=(ls ll la pwd clear history exit logout)
-
-function _skip_usual_history_commands {
-  local line=$1 command
-  for command in "${ZSH_HISTORY_SKIP_COMMANDS[@]}"; do
-    [[ $line == "$command" || $line == "$command "* ]] && return 1
-  done
-  return 0
-}
-
-autoload -Uz add-zsh-hook
-add-zsh-hook zshaddhistory _skip_usual_history_commands
+setopt EXTENDED_GLOB
+HISTORY_IGNORE='(ls|ll|la|pwd|clear|history|exit|logout)(| *)'
 ```
 
-This skips an exact command name with optional arguments (`ls -la`) but not a
-longer name (`lsblk`). It is a simple line check, not a shell parser, so
-wrappers and compound commands are not recognized. New matching entries are
-excluded from memory and future history-file saves; existing history is left
-untouched.
+The pattern skips an exact command name, with or without arguments (`ls -la`),
+but not a longer name (`lsblk`). `HISTORY_IGNORE` affects history-file writes;
+matching commands can still appear in the current shell's in-memory history
+and fuzzy-search results. It does not immediately remove existing history
+entries.
 
 ## Quick checks
 
